@@ -1,0 +1,165 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0
+         http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+
+  <groupId>br.com.controle</groupId>
+  <artifactId>controle-financeiro</artifactId>
+  <version>1.0.0</version>
+  <packaging>jar</packaging>
+
+  <name>Sistema de Controle Financeiro</name>
+  <description>Sistema de controle financeiro pessoal com Java Swing e MySQL</description>
+
+  <properties>
+    <maven.compiler.source>21</maven.compiler.source>
+    <maven.compiler.target>21</maven.compiler.target>
+    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    <mysql.version>8.0.33</mysql.version>
+    <flatlaf.version>3.2.5</flatlaf.version>
+    <junit.version>5.10.0</junit.version>
+    <miglayout.version>5.3</miglayout.version>
+  </properties>
+
+  <dependencies>
+    <!-- MySQL Driver -->
+    <dependency>
+      <groupId>mysql</groupId>
+      <artifactId>mysql-connector-java</artifactId>
+      <version>${mysql.version}</version>
+    </dependency>
+
+    <!-- FlatLaf - Look and Feel moderno para Swing -->
+    <dependency>
+      <groupId>com.formdev</groupId>
+      <artifactId>flatlaf</artifactId>
+      <version>${flatlaf.version}</version>
+    </dependency>
+
+    <!-- MigLayout - Layout manager avançado -->
+    <dependency>
+      <groupId>com.miglayout</groupId>
+      <artifactId>miglayout-swing</artifactId>
+      <version>${miglayout.version}</version>
+    </dependency>
+
+    <!-- JCalendar - Componente de calendário -->
+    <dependency>
+      <groupId>com.toedter</groupId>
+      <artifactId>jcalendar</artifactId>
+      <version>1.4</version>
+    </dependency>
+
+    <!-- Apache Commons Lang - Utilitários -->
+    <dependency>
+      <groupId>org.apache.commons</groupId>
+      <artifactId>commons-lang3</artifactId>
+      <version>3.13.0</version>
+    </dependency>
+
+    <!-- Jackson para JSON (futuras integrações) -->
+    <dependency>
+      <groupId>com.fasterxml.jackson.core</groupId>
+      <artifactId>jackson-databind</artifactId>
+      <version>2.15.2</version>
+    </dependency>
+
+    <!-- Logback para logging -->
+    <dependency>
+      <groupId>ch.qos.logback</groupId>
+      <artifactId>logback-classic</artifactId>
+      <version>1.4.11</version>
+    </dependency>
+
+    <!-- JUnit 5 para testes -->
+    <dependency>
+      <groupId>org.junit.jupiter</groupId>
+      <artifactId>junit-jupiter</artifactId>
+      <version>${junit.version}</version>
+      <scope>test</scope>
+    </dependency>
+
+    <!-- Mockito para mocks em testes -->
+    <dependency>
+      <groupId>org.mockito</groupId>
+      <artifactId>mockito-core</artifactId>
+      <version>5.5.0</version>
+      <scope>test</scope>
+    </dependency>
+
+    <!-- H2 Database para testes -->
+    <dependency>
+      <groupId>com.h2database</groupId>
+      <artifactId>h2</artifactId>
+      <version>2.2.224</version>
+      <scope>test</scope>
+    </dependency>
+  </dependencies>
+
+  <build>
+    <plugins>
+      <!-- Maven Compiler Plugin -->
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-compiler-plugin</artifactId>
+        <version>3.11.0</version>
+        <configuration>
+          <source>21</source>
+          <target>21</target>
+          <encoding>UTF-8</encoding>
+        </configuration>
+      </plugin>
+
+      <!-- Maven Surefire Plugin para testes -->
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-surefire-plugin</artifactId>
+        <version>3.1.2</version>
+      </plugin>
+
+      <!-- Maven Shade Plugin para criar JAR executável -->
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-shade-plugin</artifactId>
+        <version>3.5.0</version>
+        <executions>
+          <execution>
+            <phase>package</phase>
+            <goals>
+              <goal>shade</goal>
+            </goals>
+            <configuration>
+              <transformers>
+                <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
+                  <mainClass>br.com.controle.financeiro.Main</mainClass>
+                </transformer>
+              </transformers>
+              <finalName>controle-financeiro-${version}</finalName>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+
+      <!-- Plugin para recursos -->
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-resources-plugin</artifactId>
+        <version>3.3.1</version>
+        <configuration>
+          <encoding>UTF-8</encoding>
+        </configuration>
+      </plugin>
+    </plugins>
+
+    <resources>
+      <resource>
+        <directory>src/main/resources</directory>
+        <includes>
+          <include>**/*</include>
+        </includes>
+      </resource>
+    </resources>
+  </build>
+</project>
