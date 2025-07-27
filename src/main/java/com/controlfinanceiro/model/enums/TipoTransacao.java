@@ -1,5 +1,6 @@
 package com.controlfinanceiro.model.enums;
-
+/*
+* TIpos de transação financeira*/
 public enum TipoTransacao {
     RECEITA ("Receita", "Entrada de dinheiro"),
     DESPESA("Despesa", "Saída de Dinheiro");
@@ -17,5 +18,21 @@ public enum TipoTransacao {
         return detalhamento;
     }
 
+    /*
+    * Converter uma String de volta paara um membro a enumeração*/
+    public static TipoTransacao fromString(String tipo){
+        if(tipo == null) return null;
+        for (TipoTransacao t : values()) {
+            if(t.name().equalsIgnoreCase(tipo)){
+                return t;
+            }
+        }
+        throw new IllegalArgumentException("Tipo de transação inválido: " + tipo);
+    }
 
+
+    @Override
+    public String toString() {
+        return descricao;
+    }
 }
