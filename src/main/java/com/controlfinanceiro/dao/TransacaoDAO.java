@@ -10,19 +10,25 @@ import java.util.Optional;
 
 public interface TransacaoDAO {
 
-    Transacao salvar(Transacao transacao) throws DAOException;
+    Transacao inserir(Transacao transacao) throws DAOException;
     Transacao atualizar(Transacao transacao) throws DAOException;
-    void deletar(Long id) throws DAOException;
+    void excluir(Long id) throws DAOException;
     Optional<Transacao> buscarPorId(Long id) throws DAOException;
     List<Transacao> listarTodas() throws DAOException;
-    List<Transacao> listarPorPeriodo(LocalDate dataInicio, LocalDate dataFim) throws DAOException;
-    List<Transacao> listarPorCategoria(Long categoriaId) throws DAOException;
+    List<Transacao> listarPorPeriodo(LocalDate inicio, LocalDate fim) throws DAOException;
+    List<Transacao> buscarPorCategoria(Long categoriaId) throws DAOException;
+    List<Transacao> buscarPorTipo(TipoTransacao tipo) throws DAOException;
     List<Transacao> listarPorTipo(TipoTransacao tipo) throws DAOException;
-    List<Transacao> listarPorCategoriaEPeriodo(Long categoriaId, LocalDate dataInicio, LocalDate dataFim) throws DAOException;
-    BigDecimal calcularTotalReceitas(LocalDate dataInicio, LocalDate dataFim) throws DAOException;
-    BigDecimal calcularTotalDespesas(LocalDate dataInicio, LocalDate dataFim) throws DAOException;
-    BigDecimal calcularSaldo(LocalDate dataInicio, LocalDate dataFim) throws DAOException;
-    BigDecimal calcularTotalPorCategoria(Long categoriaId, LocalDate dataInicio, LocalDate dataFim) throws DAOException;
+    BigDecimal calcularTotalPorTipo(TipoTransacao tipo) throws DAOException;
+    BigDecimal calcularTotalPorPeriodo(LocalDate inicio, LocalDate fim) throws DAOException;
+    BigDecimal calcularTotalPorCategoriaEPeriodo(Long categoriaId, LocalDate inicio, LocalDate fim) throws DAOException;
     List<Transacao> buscarPorDescricao(String descricao) throws DAOException;
-    void inativar(Long id) throws DAOException;
+
+    // Métodos para filtrar por usuário
+    List<Transacao> buscarPorUsuario(Long usuarioId) throws DAOException;
+    List<Transacao> buscarPorUsuarioEPeriodo(Long usuarioId, LocalDate dataInicio, LocalDate dataFim) throws DAOException;
+    List<Transacao> buscarPorUsuarioETipo(Long usuarioId, TipoTransacao tipo) throws DAOException;
+    BigDecimal calcularTotalPorUsuarioETipo(Long usuarioId, TipoTransacao tipo) throws DAOException;
+    BigDecimal calcularTotalPorUsuarioEPeriodo(Long usuarioId, LocalDate inicio, LocalDate fim) throws DAOException;
+    List<Transacao> buscarUltimasTransacoesPorUsuario(Long usuarioId, int limite) throws DAOException;
 }

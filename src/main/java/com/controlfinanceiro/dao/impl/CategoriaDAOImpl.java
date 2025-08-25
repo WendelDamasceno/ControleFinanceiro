@@ -26,10 +26,10 @@ public class CategoriaDAOImpl implements CategoriaDAO {
         "SELECT id, nome, descricao, ativo, data_criacao, data_atualizacao FROM categoria WHERE id = ?";
 
     private static final String SELECT_ALL_SQL =
-        "SELECT id, nome, descricao, ativo, data_criacao, data_atualizacao FROM categoria WHERE ativo = true ORDER BY nome";
-
-    private static final String SELECT_ALL_WITH_INACTIVE_SQL =
         "SELECT id, nome, descricao, ativo, data_criacao, data_atualizacao FROM categoria ORDER BY nome";
+
+    private static final String SELECT_ACTIVE_SQL =
+        "SELECT id, nome, descricao, ativo, data_criacao, data_atualizacao FROM categoria WHERE ativo = true ORDER BY nome";
 
     private static final String SELECT_BY_NAME_SQL =
         "SELECT id, nome, descricao, ativo, data_criacao, data_atualizacao FROM categoria WHERE LOWER(nome) LIKE LOWER(?) AND ativo = true";
@@ -37,20 +37,17 @@ public class CategoriaDAOImpl implements CategoriaDAO {
     private static final String EXISTS_BY_NAME_SQL =
         "SELECT COUNT(*) FROM categoria WHERE LOWER(nome) = LOWER(?) AND ativo = true";
 
-    private static final String INACTIVATE_SQL =
-        "UPDATE categoria SET ativo = false, data_atualizacao = ? WHERE id = ?";
-
-    private static final String ACTIVATE_SQL =
-        "UPDATE categoria SET ativo = true, data_atualizacao = ? WHERE id = ?";
-
     @Override
-    public Categoria salvar(Categoria categoria) throws DAOException {
-        if (categoria == null || !categoria.isValid()) {
+    public Categoria inserir(Categoria categoria) throws DAOException {
+        if (categoria == null) {
             throw new DAOException("Categoria inválida para salvar");
         }
 
         try (Connection conn = ConnectionFactory.getConnection();
              PreparedStatement stmt = conn.prepareStatement(INSERT_SQL, Statement.RETURN_GENERATED_KEYS)) {
+
+            categoria.setDataCriacao(LocalDateTime.now());
+            categoria.setDataAtualizacao(LocalDateTime.now());
 
             stmt.setString(1, categoria.getNome());
             stmt.setString(2, categoria.getDescricao());
@@ -78,7 +75,7 @@ public class CategoriaDAOImpl implements CategoriaDAO {
 
     @Override
     public Categoria atualizar(Categoria categoria) throws DAOException {
-        if (categoria == null || categoria.getId() == null || !categoria.isValid()) {
+        if (categoria == null || categoria.getId() == null) {
             throw new DAOException("Categoria inválida para atualizar");
         }
 
@@ -106,7 +103,7 @@ public class CategoriaDAOImpl implements CategoriaDAO {
     }
 
     @Override
-    public void deletar(Long id) throws DAOException {
+    public void excluir(Long id) throws DAOException {
         if (id == null) {
             throw new DAOException("ID da categoria não pode ser nulo");
         }
@@ -118,11 +115,11 @@ public class CategoriaDAOImpl implements CategoriaDAO {
 
             int rowsAffected = stmt.executeUpdate();
             if (rowsAffected == 0) {
-                throw new DAOException("Categoria não encontrada para deletar");
+                throw new DAOException("Categoria não encontrada para excluir");
             }
 
         } catch (SQLException e) {
-            throw new DAOException("Erro ao deletar categoria: " + e.getMessage(), e);
+            throw new DAOException("Erro ao excluir categoria: " + e.getMessage(), e);
         }
     }
 
@@ -152,16 +149,10 @@ public class CategoriaDAOImpl implements CategoriaDAO {
 
     @Override
     public List<Categoria> listarTodas() throws DAOException {
-        return listarTodas(false);
-    }
-
-    @Override
-    public List<Categoria> listarTodas(boolean incluirInativas) throws DAOException {
         List<Categoria> categorias = new ArrayList<>();
-        String sql = incluirInativas ? SELECT_ALL_WITH_INACTIVE_SQL : SELECT_ALL_SQL;
 
         try (Connection conn = ConnectionFactory.getConnection();
-             PreparedStatement stmt = conn.prepareStatement(sql);
+             PreparedStatement stmt = conn.prepareStatement(SELECT_ALL_SQL);
              ResultSet rs = stmt.executeQuery()) {
 
             while (rs.next()) {
@@ -170,6 +161,25 @@ public class CategoriaDAOImpl implements CategoriaDAO {
 
         } catch (SQLException e) {
             throw new DAOException("Erro ao listar categorias: " + e.getMessage(), e);
+        }
+
+        return categorias;
+    }
+
+    @Override
+    public List<Categoria> listarAtivas() throws DAOException {
+        List<Categoria> categorias = new ArrayList<>();
+
+        try (Connection conn = ConnectionFactory.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(SELECT_ACTIVE_SQL);
+             ResultSet rs = stmt.executeQuery()) {
+
+            while (rs.next()) {
+                categorias.add(mapResultSetToCategoria(rs));
+            }
+
+        } catch (SQLException e) {
+            throw new DAOException("Erro ao listar categorias ativas: " + e.getMessage(), e);
         }
 
         return categorias;
@@ -219,7 +229,7 @@ public class CategoriaDAOImpl implements CategoriaDAO {
             }
 
         } catch (SQLException e) {
-            throw new DAOException("Erro ao verificar existência de categoria: " + e.getMessage(), e);
+            throw new DAOException("Erro ao verificar existência da categoria: " + e.getMessage(), e);
         }
 
         return false;
@@ -231,8 +241,10 @@ public class CategoriaDAOImpl implements CategoriaDAO {
             throw new DAOException("ID da categoria não pode ser nulo");
         }
 
+        String sql = "UPDATE categoria SET ativo = false, data_atualizacao = ? WHERE id = ?";
+
         try (Connection conn = ConnectionFactory.getConnection();
-             PreparedStatement stmt = conn.prepareStatement(INACTIVATE_SQL)) {
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
 
             stmt.setTimestamp(1, Timestamp.valueOf(LocalDateTime.now()));
             stmt.setLong(2, id);
@@ -253,8 +265,10 @@ public class CategoriaDAOImpl implements CategoriaDAO {
             throw new DAOException("ID da categoria não pode ser nulo");
         }
 
+        String sql = "UPDATE categoria SET ativo = true, data_atualizacao = ? WHERE id = ?";
+
         try (Connection conn = ConnectionFactory.getConnection();
-             PreparedStatement stmt = conn.prepareStatement(ACTIVATE_SQL)) {
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
 
             stmt.setTimestamp(1, Timestamp.valueOf(LocalDateTime.now()));
             stmt.setLong(2, id);

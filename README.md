@@ -1,104 +1,189 @@
 # Sistema de Controle Financeiro
 
+Sistema desenvolvido para a disciplina de Programação Orientada a Objetos (POO) do IFBA.
+
 ## 📋 Descrição
-Sistema de controle financeiro pessoal desenvolvido em Java como projeto da disciplina de **Programação Orientada a Objetos (POO)** do **IFBA**. Esta é a **primeira parte do projeto**, focando na estrutura backend e modelagem de dados.
 
-## 🎯 Objetivos da Disciplina
-- Aplicar conceitos de Programação Orientada a Objetos
-- Implementar padrões de projeto (DAO, MVC)
-- Trabalhar com persistência de dados usando JDBC
+Este é um sistema de controle financeiro pessoal que permite gerenciar receitas, despesas, categorias e orçamentos. O projeto utiliza Java com Maven, banco de dados MySQL e arquitetura MVC.
 
-## 🏗️ Arquitetura do Projeto
+## 🏗️ Arquitetura
 
-### Padrões Implementados
-- **MVC (Model-View-Controller)**: Separação clara de responsabilidades
-- **DAO (Data Access Object)**: Abstração da camada de acesso a dados
-- **Factory Pattern**: Para conexões com banco de dados
+O projeto segue o padrão MVC (Model-View-Controller) com as seguintes camadas:
 
-### Estrutura de Pacotes
-```
-com.controlfinanceiro/
-├── model/          # Entidades e enums
-├── dao/            # Interfaces e implementações DAO
-├── controller/     # Controladores da aplicação
-├── view/           # Interface gráfica (a ser implementada)
-├── util/           # Classes utilitárias
-└── exception/      # Exceções customizadas
-```
+- **Model**: Classes de entidade (Transacao, Categoria, Orcamento)
+- **View**: Interfaces gráficas (a implementar)
+- **Controller**: Lógica de negócio (TransacaoController, CategoriaController, etc.)
+- **DAO**: Acesso a dados (TransacaoDAO, CategoriaDAO, etc.)
 
-## 📊 Modelo de Dados
+## 🚀 Funcionalidades
 
-### Entidades Principais
-- **Categoria**: Classificação das transações
-- **Transacao**: Registro de receitas e despesas
-- **Orcamento**: Controle de limites de gastos por categoria
+### ✅ Implementadas
 
-### Banco de Dados
-- **SGBD**: MySQL 8.0+
-- **Encoding**: UTF-8 (utf8mb4)
-- **Script**: `script_banco.sql` com estrutura completa
-
-## 🛠️ Tecnologias Utilizadas
-
-### Backend
-- **Java 21** - Linguagem principal
-- **Maven** - Gerenciamento de dependências
-- **MySQL Connector** - Conexão com banco de dados
-- **Apache Commons Lang** - Utilitários
-
-### Interface (Planejada)
-- **Java Swing** - Interface gráfica desktop
-
-
-### Logging e Serialização
-- **Logback** - Sistema de logs
-- **Jackson** - Processamento JSON (futuras integrações)
-
-## 📁 Funcionalidades Implementadas (Backend)
-
-### ✅ Estrutura Completa
-- [x] Modelos de dados com validações
-- [x] DAOs com operações CRUD
-- [x] Controladores com regras de negócio
-- [x] Sistema de exceções customizadas
-- [x] Utilitários para formatação e conexão
-- [x] Configuração Maven completa
-- [x] Script de banco com dados de exemplo
+- **Gestão de Categorias**: CRUD completo para categorias de transações
+- **Gestão de Transações**: Registro de receitas e despesas
+- **Gestão de Orçamentos**: Definição de limites de gastos por categoria/período
+- **Relatórios**: Resumos financeiros e comparações orçamento vs real
+- **Validações**: Sistema robusto de validação de dados
+- **Exceções**: Tratamento adequado de erros
 
 ### 🔄 Em Desenvolvimento
-- [ ] Interface gráfica (View layer)
-- [ ] Classe principal funcional
-- [ ] Integração completa das camadas
 
-## 🗃️ Estrutura do Banco de Dados
+- **Interface Gráfica**: Telas para interação com o usuário
+- **Método Main**: Aplicação principal executável
 
-### Tabelas
-1. **categoria** - Categorias das transações
-2. **transacao** - Registro de movimentações financeiras
-3. **orcamento** - Limites de gastos por categoria/mês
+## 🛠️ Tecnologias
 
-## 🚀 Como Executar
+- **Java 21**
+- **Maven** - Gerenciamento de dependências
+- **MySQL** - Banco de dados
+- **SLF4J + Logback** - Sistema de logs
+- **JUnit** - Testes unitários
+
+## ⚙️ Configuração do Ambiente
+
+### 1. Pré-requisitos
+
+- Java 21 ou superior
+- Maven 3.6+
+- MySQL 8.0+
+
+### 2. Configuração do Banco de Dados
+
+#### Opção A: Arquivo de Configuração (Desenvolvimento Local)
+
+1. Copie o arquivo template:
+```bash
+cp src/main/resources/database.properties.template src/main/resources/database.properties
+```
+
+2. Edite o arquivo `database.properties` com suas credenciais:
+```properties
+db.url=jdbc:mysql://localhost:3306/controle_financeiro?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+db.username=root
+db.password=SUA_SENHA_AQUI
+db.driver=com.mysql.cj.jdbc.Driver
+```
+
+#### Opção B: Variáveis de Ambiente (Produção/Segurança)
+
+Configure as seguintes variáveis de ambiente:
+```bash
+export DB_URL="jdbc:mysql://localhost:3306/controle_financeiro?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC"
+export DB_USERNAME="root"
+export DB_PASSWORD="sua_senha_aqui"
+export DB_DRIVER="com.mysql.cj.jdbc.Driver"
+```
+
+### 3. Criação do Banco
+
+Execute o script SQL para criar o banco de dados:
+```bash
+mysql -u root -p < script_banco.sql
+```
+
+### 4. Compilação e Execução
+
+```bash
+# Compilar o projeto
+mvn clean compile
+
+# Executar testes automáticos
+mvn exec:java -Dexec.mainClass="com.controlfinanceiro.TesteAutomatico"
+
+# Executar aplicação principal (quando implementada)
+mvn exec:java -Dexec.mainClass="com.controlfinanceiro.App"
+```
+
+## 🔒 Segurança
+
+⚠️ **IMPORTANTE**: O arquivo `database.properties` contém informações sensíveis e está configurado no `.gitignore` para não ser enviado ao repositório.
+
+- Use o arquivo `database.properties.template` como base
+- Configure suas credenciais localmente
+- Para ambientes de produção, use variáveis de ambiente
+
+## 📦 Estrutura do Projeto
+
+```
+src/main/java/com/controlfinanceiro/
+├── controller/          # Controllers da aplicação
+├── dao/                # Interfaces de acesso a dados
+│   └── impl/           # Implementações dos DAOs
+├── exception/          # Exceções customizadas
+├── model/              # Entidades do domínio
+│   └── enums/          # Enumerações
+├── util/               # Classes utilitárias
+└── view/               # Interfaces gráficas (a implementar)
+```
+
+## 🗄️ Banco de Dados
+
+O sistema utiliza 3 tabelas principais:
+
+- **categoria**: Categorias de transações
+- **transacao**: Registros de receitas e despesas
+- **orcamento**: Limites de gastos por categoria/período
+
+### Como executar o script:
+```sql
+mysql -u root -p < script_banco.sql
+```
+
+## ⚙️ Como Executar
 
 ### Pré-requisitos
 - Java 21+
-- Maven 3.8+
+- Maven 3.6+
 - MySQL 8.0+
 
-## 📋 Status do Projeto
+### Passos:
+1. Clone o repositório
+2. Execute o script do banco de dados
+3. Configure as credenciais em `database.properties`
+4. Compile o projeto:
+   ```bash
+   mvn clean compile
+   ```
+5. Execute os testes:
+   ```bash
+   mvn test
+   ```
 
-### Primeira Entrega (Atual)
-- ✅ Modelagem completa das entidades
-- ✅ Implementação da camada DAO
-- ✅ Controladores com regras de negócio
-- ✅ Sistema de exceções
-- ✅ Estrutura de banco de dados
-- ✅ Configuração Maven
+## 📊 Dados de Exemplo
 
-### Próximas Etapas
-- 🔄 Desenvolvimento da interface gráfica
-- 🔄 Integração View-Controller
-- 🔄 Implementação de relatórios
-- 🔄 Validações de formulário
-- 🔄 Sistema de backup/restore
+O script do banco inclui dados de exemplo:
+- 11 categorias pré-definidas
+- 6 transações de exemplo
+- 4 orçamentos para Janeiro/2025
 
-**Nota**: Esta é a primeira versão do projeto, com foco na estrutura backend. A interface gráfica será implementada nas próximas etapas.
+## 🧪 Testes
+
+Execute os testes unitários:
+```bash
+mvn test
+```
+
+## 📝 Logs
+
+Os logs são configurados via `logback.xml` e salvos em:
+- Console (nível INFO)
+- Arquivo (nível DEBUG)
+
+## 👥 Autor
+
+Wendel Damasceno - Disciplina POO/IFBA
+
+## 📅 Status do Projeto
+
+**Primeira Entrega - Concluída ✅**
+- [x] Modelos de dados
+- [x] Controllers com validações
+- [x] DAOs com operações CRUD
+- [x] Sistema de exceções
+- [x] Relatórios básicos
+- [x] Compilação sem erros
+
+**Próximas Entregas**
+- [ ] Interface gráfica
+- [ ] Aplicação executável
+- [ ] Testes de integração

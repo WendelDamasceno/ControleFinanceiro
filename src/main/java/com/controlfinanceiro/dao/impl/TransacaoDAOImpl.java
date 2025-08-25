@@ -17,71 +17,86 @@ import java.util.Optional;
 
 public class TransacaoDAOImpl implements TransacaoDAO {
 
+    // SQL atualizado para incluir usuario_id
     private static final String INSERT_SQL =
-        "INSERT INTO transacao (descricao, valor, data_transacao, tipo, categoria_id, observacao, ativo, data_criacao, data_atualizacao) " +
-        "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
+        "INSERT INTO transacao (descricao, valor, data_transacao, tipo, categoria_id, usuario_id, observacoes, ativo, data_criacao, data_atualizacao) " +
+        "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
     private static final String UPDATE_SQL =
-        "UPDATE transacao SET descricao = ?, valor = ?, data_transacao = ?, tipo = ?, categoria_id = ?, observacao = ?, ativo = ?, data_atualizacao = ? WHERE id = ?";
+        "UPDATE transacao SET descricao = ?, valor = ?, data_transacao = ?, tipo = ?, categoria_id = ?, usuario_id = ?, observacoes = ?, ativo = ?, data_atualizacao = ? WHERE id = ?";
 
     private static final String DELETE_SQL =
         "DELETE FROM transacao WHERE id = ?";
 
+    // SQLs compatíveis com a estrutura atual do banco (sem usuario_id)
     private static final String SELECT_BY_ID_SQL =
-        "SELECT t.id, t.descricao, t.valor, t.data_transacao, t.tipo, t.categoria_id, t.observacao, t.ativo, t.data_criacao, t.data_atualizacao, " +
+        "SELECT t.id, t.descricao, t.valor, t.data_transacao, t.tipo, t.categoria_id, t.observacoes, t.ativo, t.data_criacao, t.data_atualizacao, " +
         "c.nome as categoria_nome, c.descricao as categoria_descricao " +
         "FROM transacao t LEFT JOIN categoria c ON t.categoria_id = c.id WHERE t.id = ?";
 
     private static final String SELECT_ALL_SQL =
-        "SELECT t.id, t.descricao, t.valor, t.data_transacao, t.tipo, t.categoria_id, t.observacao, t.ativo, t.data_criacao, t.data_atualizacao, " +
+        "SELECT t.id, t.descricao, t.valor, t.data_transacao, t.tipo, t.categoria_id, t.observacoes, t.ativo, t.data_criacao, t.data_atualizacao, " +
         "c.nome as categoria_nome, c.descricao as categoria_descricao " +
         "FROM transacao t LEFT JOIN categoria c ON t.categoria_id = c.id WHERE t.ativo = true ORDER BY t.data_transacao DESC";
 
     private static final String SELECT_BY_PERIOD_SQL =
-        "SELECT t.id, t.descricao, t.valor, t.data_transacao, t.tipo, t.categoria_id, t.observacao, t.ativo, t.data_criacao, t.data_atualizacao, " +
+        "SELECT t.id, t.descricao, t.valor, t.data_transacao, t.tipo, t.categoria_id, t.observacoes, t.ativo, t.data_criacao, t.data_atualizacao, " +
         "c.nome as categoria_nome, c.descricao as categoria_descricao " +
         "FROM transacao t LEFT JOIN categoria c ON t.categoria_id = c.id " +
         "WHERE t.ativo = true AND t.data_transacao BETWEEN ? AND ? ORDER BY t.data_transacao DESC";
 
     private static final String SELECT_BY_CATEGORIA_SQL =
-        "SELECT t.id, t.descricao, t.valor, t.data_transacao, t.tipo, t.categoria_id, t.observacao, t.ativo, t.data_criacao, t.data_atualizacao, " +
+        "SELECT t.id, t.descricao, t.valor, t.data_transacao, t.tipo, t.categoria_id, t.observacoes, t.ativo, t.data_criacao, t.data_atualizacao, " +
         "c.nome as categoria_nome, c.descricao as categoria_descricao " +
         "FROM transacao t LEFT JOIN categoria c ON t.categoria_id = c.id " +
         "WHERE t.ativo = true AND t.categoria_id = ? ORDER BY t.data_transacao DESC";
 
     private static final String SELECT_BY_TIPO_SQL =
-        "SELECT t.id, t.descricao, t.valor, t.data_transacao, t.tipo, t.categoria_id, t.observacao, t.ativo, t.data_criacao, t.data_atualizacao, " +
+        "SELECT t.id, t.descricao, t.valor, t.data_transacao, t.tipo, t.categoria_id, t.observacoes, t.ativo, t.data_criacao, t.data_atualizacao, " +
         "c.nome as categoria_nome, c.descricao as categoria_descricao " +
         "FROM transacao t LEFT JOIN categoria c ON t.categoria_id = c.id " +
         "WHERE t.ativo = true AND t.tipo = ? ORDER BY t.data_transacao DESC";
 
-    private static final String SELECT_BY_CATEGORIA_PERIOD_SQL =
-        "SELECT t.id, t.descricao, t.valor, t.data_transacao, t.tipo, t.categoria_id, t.observacao, t.ativo, t.data_criacao, t.data_atualizacao, " +
-        "c.nome as categoria_nome, c.descricao as categoria_descricao " +
-        "FROM transacao t LEFT JOIN categoria c ON t.categoria_id = c.id " +
-        "WHERE t.ativo = true AND t.categoria_id = ? AND t.data_transacao BETWEEN ? AND ? ORDER BY t.data_transacao DESC";
-
-    private static final String SUM_RECEITAS_SQL =
-        "SELECT COALESCE(SUM(valor), 0) FROM transacao WHERE ativo = true AND tipo = 'RECEITA' AND data_transacao BETWEEN ? AND ?";
-
-    private static final String SUM_DESPESAS_SQL =
-        "SELECT COALESCE(SUM(valor), 0) FROM transacao WHERE ativo = true AND tipo = 'DESPESA' AND data_transacao BETWEEN ? AND ?";
-
-    private static final String SUM_BY_CATEGORIA_SQL =
-        "SELECT COALESCE(SUM(valor), 0) FROM transacao WHERE ativo = true AND categoria_id = ? AND data_transacao BETWEEN ? AND ?";
-
     private static final String SELECT_BY_DESCRICAO_SQL =
-        "SELECT t.id, t.descricao, t.valor, t.data_transacao, t.tipo, t.categoria_id, t.observacao, t.ativo, t.data_criacao, t.data_atualizacao, " +
+        "SELECT t.id, t.descricao, t.valor, t.data_transacao, t.tipo, t.categoria_id, t.observacoes, t.ativo, t.data_criacao, t.data_atualizacao, " +
         "c.nome as categoria_nome, c.descricao as categoria_descricao " +
         "FROM transacao t LEFT JOIN categoria c ON t.categoria_id = c.id " +
         "WHERE t.ativo = true AND LOWER(t.descricao) LIKE LOWER(?) ORDER BY t.data_transacao DESC";
 
-    private static final String INACTIVATE_SQL =
-        "UPDATE transacao SET ativo = false, data_atualizacao = ? WHERE id = ?";
+    // SQLs para filtrar por usuário
+    private static final String SELECT_BY_USUARIO_SQL =
+        "SELECT t.id, t.descricao, t.valor, t.data_transacao, t.tipo, t.categoria_id, t.usuario_id, t.observacoes, t.ativo, t.data_criacao, t.data_atualizacao, " +
+        "c.nome as categoria_nome, c.descricao as categoria_descricao " +
+        "FROM transacao t LEFT JOIN categoria c ON t.categoria_id = c.id " +
+        "WHERE t.ativo = true AND t.usuario_id = ? ORDER BY t.data_transacao DESC";
+
+    private static final String SELECT_BY_USUARIO_AND_PERIOD_SQL =
+        "SELECT t.id, t.descricao, t.valor, t.data_transacao, t.tipo, t.categoria_id, t.usuario_id, t.observacoes, t.ativo, t.data_criacao, t.data_atualizacao, " +
+        "c.nome as categoria_nome, c.descricao as categoria_descricao " +
+        "FROM transacao t LEFT JOIN categoria c ON t.categoria_id = c.id " +
+        "WHERE t.ativo = true AND t.usuario_id = ? AND t.data_transacao BETWEEN ? AND ? ORDER BY t.data_transacao DESC";
+
+    private static final String SELECT_BY_USUARIO_AND_TIPO_SQL =
+        "SELECT t.id, t.descricao, t.valor, t.data_transacao, t.tipo, t.categoria_id, t.usuario_id, t.observacoes, t.ativo, t.data_criacao, t.data_atualizacao, " +
+        "c.nome as categoria_nome, c.descricao as categoria_descricao " +
+        "FROM transacao t LEFT JOIN categoria c ON t.categoria_id = c.id " +
+        "WHERE t.ativo = true AND t.usuario_id = ? AND t.tipo = ? ORDER BY t.data_transacao DESC";
+
+    private static final String SELECT_ULTIMAS_BY_USUARIO_SQL =
+        "SELECT t.id, t.descricao, t.valor, t.data_transacao, t.tipo, t.categoria_id, t.usuario_id, t.observacoes, t.ativo, t.data_criacao, t.data_atualizacao, " +
+        "c.nome as categoria_nome, c.descricao as categoria_descricao " +
+        "FROM transacao t LEFT JOIN categoria c ON t.categoria_id = c.id " +
+        "WHERE t.ativo = true AND t.usuario_id = ? ORDER BY t.data_transacao DESC LIMIT ?";
+
+    private static final String CALCULATE_TOTAL_BY_USUARIO_AND_TIPO_SQL =
+        "SELECT COALESCE(SUM(valor), 0) FROM transacao WHERE ativo = true AND usuario_id = ? AND tipo = ?";
+
+    private static final String CALCULATE_TOTAL_BY_USUARIO_AND_PERIOD_SQL =
+        "SELECT COALESCE(SUM(valor), 0) FROM transacao WHERE ativo = true AND usuario_id = ? AND data_transacao BETWEEN ? AND ?";
 
     @Override
-    public Transacao salvar(Transacao transacao) throws DAOException {
-        if (transacao == null || !transacao.isValid()) {
+    public Transacao inserir(Transacao transacao) throws DAOException {
+        if (transacao == null) {
             throw new DAOException("Transação inválida para salvar");
         }
 
@@ -93,10 +108,11 @@ public class TransacaoDAOImpl implements TransacaoDAO {
             stmt.setDate(3, Date.valueOf(transacao.getDataTransacao()));
             stmt.setString(4, transacao.getTipo().name());
             stmt.setObject(5, transacao.getCategoriaId());
-            stmt.setString(6, transacao.getObservacao());
-            stmt.setBoolean(7, transacao.isAtivo());
-            stmt.setTimestamp(8, Timestamp.valueOf(transacao.getDataCriacao()));
-            stmt.setTimestamp(9, Timestamp.valueOf(transacao.getDataAtualizacao()));
+            stmt.setLong(6, transacao.getUsuarioId());
+            stmt.setString(7, transacao.getObservacao());
+            stmt.setBoolean(8, transacao.isAtivo());
+            stmt.setTimestamp(9, Timestamp.valueOf(transacao.getDataCriacao()));
+            stmt.setTimestamp(10, Timestamp.valueOf(transacao.getDataAtualizacao()));
 
             int rowsAffected = stmt.executeUpdate();
             if (rowsAffected == 0) {
@@ -118,7 +134,7 @@ public class TransacaoDAOImpl implements TransacaoDAO {
 
     @Override
     public Transacao atualizar(Transacao transacao) throws DAOException {
-        if (transacao == null || transacao.getId() == null || !transacao.isValid()) {
+        if (transacao == null || transacao.getId() == null) {
             throw new DAOException("Transação inválida para atualizar");
         }
 
@@ -132,10 +148,11 @@ public class TransacaoDAOImpl implements TransacaoDAO {
             stmt.setDate(3, Date.valueOf(transacao.getDataTransacao()));
             stmt.setString(4, transacao.getTipo().name());
             stmt.setObject(5, transacao.getCategoriaId());
-            stmt.setString(6, transacao.getObservacao());
-            stmt.setBoolean(7, transacao.isAtivo());
-            stmt.setTimestamp(8, Timestamp.valueOf(transacao.getDataAtualizacao()));
-            stmt.setLong(9, transacao.getId());
+            stmt.setLong(6, transacao.getUsuarioId());
+            stmt.setString(7, transacao.getObservacao());
+            stmt.setBoolean(8, transacao.isAtivo());
+            stmt.setTimestamp(9, Timestamp.valueOf(transacao.getDataAtualizacao()));
+            stmt.setLong(10, transacao.getId());
 
             int rowsAffected = stmt.executeUpdate();
             if (rowsAffected == 0) {
@@ -150,7 +167,7 @@ public class TransacaoDAOImpl implements TransacaoDAO {
     }
 
     @Override
-    public void deletar(Long id) throws DAOException {
+    public void excluir(Long id) throws DAOException {
         if (id == null) {
             throw new DAOException("ID da transação não pode ser nulo");
         }
@@ -162,11 +179,11 @@ public class TransacaoDAOImpl implements TransacaoDAO {
 
             int rowsAffected = stmt.executeUpdate();
             if (rowsAffected == 0) {
-                throw new DAOException("Transação não encontrada para deletar");
+                throw new DAOException("Transação não encontrada para excluir");
             }
 
         } catch (SQLException e) {
-            throw new DAOException("Erro ao deletar transação: " + e.getMessage(), e);
+            throw new DAOException("Erro ao excluir transação: " + e.getMessage(), e);
         }
     }
 
@@ -241,7 +258,7 @@ public class TransacaoDAOImpl implements TransacaoDAO {
     }
 
     @Override
-    public List<Transacao> listarPorCategoria(Long categoriaId) throws DAOException {
+    public List<Transacao> buscarPorCategoria(Long categoriaId) throws DAOException {
         if (categoriaId == null) {
             throw new DAOException("ID da categoria não pode ser nulo");
         }
@@ -267,7 +284,7 @@ public class TransacaoDAOImpl implements TransacaoDAO {
     }
 
     @Override
-    public List<Transacao> listarPorTipo(TipoTransacao tipo) throws DAOException {
+    public List<Transacao> buscarPorTipo(TipoTransacao tipo) throws DAOException {
         if (tipo == null) {
             throw new DAOException("Tipo da transação não pode ser nulo");
         }
@@ -293,44 +310,22 @@ public class TransacaoDAOImpl implements TransacaoDAO {
     }
 
     @Override
-    public List<Transacao> listarPorCategoriaEPeriodo(Long categoriaId, LocalDate dataInicio, LocalDate dataFim) throws DAOException {
-        if (categoriaId == null || dataInicio == null || dataFim == null) {
-            throw new DAOException("Categoria e datas não podem ser nulas");
-        }
-
-        List<Transacao> transacoes = new ArrayList<>();
-
-        try (Connection conn = ConnectionFactory.getConnection();
-             PreparedStatement stmt = conn.prepareStatement(SELECT_BY_CATEGORIA_PERIOD_SQL)) {
-
-            stmt.setLong(1, categoriaId);
-            stmt.setDate(2, Date.valueOf(dataInicio));
-            stmt.setDate(3, Date.valueOf(dataFim));
-
-            try (ResultSet rs = stmt.executeQuery()) {
-                while (rs.next()) {
-                    transacoes.add(mapResultSetToTransacao(rs));
-                }
-            }
-
-        } catch (SQLException e) {
-            throw new DAOException("Erro ao listar transações por categoria e período: " + e.getMessage(), e);
-        }
-
-        return transacoes;
+    public List<Transacao> listarPorTipo(TipoTransacao tipo) throws DAOException {
+        return buscarPorTipo(tipo);
     }
 
     @Override
-    public BigDecimal calcularTotalReceitas(LocalDate dataInicio, LocalDate dataFim) throws DAOException {
-        if (dataInicio == null || dataFim == null) {
-            throw new DAOException("Datas de início e fim não podem ser nulas");
+    public BigDecimal calcularTotalPorTipo(TipoTransacao tipo) throws DAOException {
+        if (tipo == null) {
+            throw new DAOException("Tipo da transação não pode ser nulo");
         }
 
-        try (Connection conn = ConnectionFactory.getConnection();
-             PreparedStatement stmt = conn.prepareStatement(SUM_RECEITAS_SQL)) {
+        String sql = "SELECT COALESCE(SUM(valor), 0) FROM transacao WHERE ativo = true AND tipo = ?";
 
-            stmt.setDate(1, Date.valueOf(dataInicio));
-            stmt.setDate(2, Date.valueOf(dataFim));
+        try (Connection conn = ConnectionFactory.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+
+            stmt.setString(1, tipo.name());
 
             try (ResultSet rs = stmt.executeQuery()) {
                 if (rs.next()) {
@@ -339,23 +334,25 @@ public class TransacaoDAOImpl implements TransacaoDAO {
             }
 
         } catch (SQLException e) {
-            throw new DAOException("Erro ao calcular total de receitas: " + e.getMessage(), e);
+            throw new DAOException("Erro ao calcular total por tipo: " + e.getMessage(), e);
         }
 
         return BigDecimal.ZERO;
     }
 
     @Override
-    public BigDecimal calcularTotalDespesas(LocalDate dataInicio, LocalDate dataFim) throws DAOException {
-        if (dataInicio == null || dataFim == null) {
+    public BigDecimal calcularTotalPorPeriodo(LocalDate inicio, LocalDate fim) throws DAOException {
+        if (inicio == null || fim == null) {
             throw new DAOException("Datas de início e fim não podem ser nulas");
         }
 
-        try (Connection conn = ConnectionFactory.getConnection();
-             PreparedStatement stmt = conn.prepareStatement(SUM_DESPESAS_SQL)) {
+        String sql = "SELECT COALESCE(SUM(valor), 0) FROM transacao WHERE ativo = true AND data_transacao BETWEEN ? AND ?";
 
-            stmt.setDate(1, Date.valueOf(dataInicio));
-            stmt.setDate(2, Date.valueOf(dataFim));
+        try (Connection conn = ConnectionFactory.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+
+            stmt.setDate(1, Date.valueOf(inicio));
+            stmt.setDate(2, Date.valueOf(fim));
 
             try (ResultSet rs = stmt.executeQuery()) {
                 if (rs.next()) {
@@ -364,31 +361,26 @@ public class TransacaoDAOImpl implements TransacaoDAO {
             }
 
         } catch (SQLException e) {
-            throw new DAOException("Erro ao calcular total de despesas: " + e.getMessage(), e);
+            throw new DAOException("Erro ao calcular total por período: " + e.getMessage(), e);
         }
 
         return BigDecimal.ZERO;
     }
 
     @Override
-    public BigDecimal calcularSaldo(LocalDate dataInicio, LocalDate dataFim) throws DAOException {
-        BigDecimal receitas = calcularTotalReceitas(dataInicio, dataFim);
-        BigDecimal despesas = calcularTotalDespesas(dataInicio, dataFim);
-        return receitas.subtract(despesas);
-    }
-
-    @Override
-    public BigDecimal calcularTotalPorCategoria(Long categoriaId, LocalDate dataInicio, LocalDate dataFim) throws DAOException {
-        if (categoriaId == null || dataInicio == null || dataFim == null) {
+    public BigDecimal calcularTotalPorCategoriaEPeriodo(Long categoriaId, LocalDate inicio, LocalDate fim) throws DAOException {
+        if (categoriaId == null || inicio == null || fim == null) {
             throw new DAOException("Categoria e datas não podem ser nulas");
         }
 
+        String sql = "SELECT COALESCE(SUM(valor), 0) FROM transacao WHERE ativo = true AND categoria_id = ? AND data_transacao BETWEEN ? AND ?";
+
         try (Connection conn = ConnectionFactory.getConnection();
-             PreparedStatement stmt = conn.prepareStatement(SUM_BY_CATEGORIA_SQL)) {
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
 
             stmt.setLong(1, categoriaId);
-            stmt.setDate(2, Date.valueOf(dataInicio));
-            stmt.setDate(3, Date.valueOf(dataFim));
+            stmt.setDate(2, Date.valueOf(inicio));
+            stmt.setDate(3, Date.valueOf(fim));
 
             try (ResultSet rs = stmt.executeQuery()) {
                 if (rs.next()) {
@@ -397,7 +389,7 @@ public class TransacaoDAOImpl implements TransacaoDAO {
             }
 
         } catch (SQLException e) {
-            throw new DAOException("Erro ao calcular total por categoria: " + e.getMessage(), e);
+            throw new DAOException("Erro ao calcular total por categoria e período: " + e.getMessage(), e);
         }
 
         return BigDecimal.ZERO;
@@ -430,24 +422,153 @@ public class TransacaoDAOImpl implements TransacaoDAO {
     }
 
     @Override
-    public void inativar(Long id) throws DAOException {
-        if (id == null) {
-            throw new DAOException("ID da transação não pode ser nulo");
+    public List<Transacao> buscarPorUsuario(Long usuarioId) throws DAOException {
+        if (usuarioId == null) {
+            throw new DAOException("ID do usuário não pode ser nulo");
         }
 
         try (Connection conn = ConnectionFactory.getConnection();
-             PreparedStatement stmt = conn.prepareStatement(INACTIVATE_SQL)) {
+             PreparedStatement stmt = conn.prepareStatement(SELECT_BY_USUARIO_SQL)) {
 
-            stmt.setTimestamp(1, Timestamp.valueOf(LocalDateTime.now()));
-            stmt.setLong(2, id);
+            stmt.setLong(1, usuarioId);
 
-            int rowsAffected = stmt.executeUpdate();
-            if (rowsAffected == 0) {
-                throw new DAOException("Transação não encontrada para inativar");
+            try (ResultSet rs = stmt.executeQuery()) {
+                List<Transacao> transacoes = new ArrayList<>();
+                while (rs.next()) {
+                    transacoes.add(mapResultSetToTransacao(rs));
+                }
+                return transacoes;
             }
 
         } catch (SQLException e) {
-            throw new DAOException("Erro ao inativar transação: " + e.getMessage(), e);
+            throw new DAOException("Erro ao buscar transações por usuário: " + e.getMessage(), e);
+        }
+    }
+
+    @Override
+    public List<Transacao> buscarPorUsuarioEPeriodo(Long usuarioId, LocalDate dataInicio, LocalDate dataFim) throws DAOException {
+        if (usuarioId == null || dataInicio == null || dataFim == null) {
+            throw new DAOException("Usuário e datas de início e fim não podem ser nulos");
+        }
+
+        try (Connection conn = ConnectionFactory.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(SELECT_BY_USUARIO_AND_PERIOD_SQL)) {
+
+            stmt.setLong(1, usuarioId);
+            stmt.setDate(2, Date.valueOf(dataInicio));
+            stmt.setDate(3, Date.valueOf(dataFim));
+
+            try (ResultSet rs = stmt.executeQuery()) {
+                List<Transacao> transacoes = new ArrayList<>();
+                while (rs.next()) {
+                    transacoes.add(mapResultSetToTransacao(rs));
+                }
+                return transacoes;
+            }
+
+        } catch (SQLException e) {
+            throw new DAOException("Erro ao buscar transações por usuário e período: " + e.getMessage(), e);
+        }
+    }
+
+    @Override
+    public List<Transacao> buscarPorUsuarioETipo(Long usuarioId, TipoTransacao tipo) throws DAOException {
+        if (usuarioId == null || tipo == null) {
+            throw new DAOException("Usuário e tipo da transação não podem ser nulos");
+        }
+
+        try (Connection conn = ConnectionFactory.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(SELECT_BY_USUARIO_AND_TIPO_SQL)) {
+
+            stmt.setLong(1, usuarioId);
+            stmt.setString(2, tipo.name());
+
+            try (ResultSet rs = stmt.executeQuery()) {
+                List<Transacao> transacoes = new ArrayList<>();
+                while (rs.next()) {
+                    transacoes.add(mapResultSetToTransacao(rs));
+                }
+                return transacoes;
+            }
+
+        } catch (SQLException e) {
+            throw new DAOException("Erro ao buscar transações por usuário e tipo: " + e.getMessage(), e);
+        }
+    }
+
+    @Override
+    public BigDecimal calcularTotalPorUsuarioETipo(Long usuarioId, TipoTransacao tipo) throws DAOException {
+        if (usuarioId == null || tipo == null) {
+            throw new DAOException("Usuário e tipo da transação não podem ser nulos");
+        }
+
+        try (Connection conn = ConnectionFactory.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(CALCULATE_TOTAL_BY_USUARIO_AND_TIPO_SQL)) {
+
+            stmt.setLong(1, usuarioId);
+            stmt.setString(2, tipo.name());
+
+            try (ResultSet rs = stmt.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getBigDecimal(1);
+                }
+            }
+
+        } catch (SQLException e) {
+            throw new DAOException("Erro ao calcular total por usuário e tipo: " + e.getMessage(), e);
+        }
+
+        return BigDecimal.ZERO;
+    }
+
+    @Override
+    public BigDecimal calcularTotalPorUsuarioEPeriodo(Long usuarioId, LocalDate inicio, LocalDate fim) throws DAOException {
+        if (usuarioId == null || inicio == null || fim == null) {
+            throw new DAOException("Usuário e datas não podem ser nulos");
+        }
+
+        try (Connection conn = ConnectionFactory.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(CALCULATE_TOTAL_BY_USUARIO_AND_PERIOD_SQL)) {
+
+            stmt.setLong(1, usuarioId);
+            stmt.setDate(2, Date.valueOf(inicio));
+            stmt.setDate(3, Date.valueOf(fim));
+
+            try (ResultSet rs = stmt.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getBigDecimal(1);
+                }
+            }
+
+        } catch (SQLException e) {
+            throw new DAOException("Erro ao calcular total por usuário e período: " + e.getMessage(), e);
+        }
+
+        return BigDecimal.ZERO;
+    }
+
+    @Override
+    public List<Transacao> buscarUltimasTransacoesPorUsuario(Long usuarioId, int limite) throws DAOException {
+        if (usuarioId == null) {
+            throw new DAOException("ID do usuário não pode ser nulo");
+        }
+
+        try (Connection conn = ConnectionFactory.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(SELECT_ULTIMAS_BY_USUARIO_SQL)) {
+
+            stmt.setLong(1, usuarioId);
+            stmt.setInt(2, limite);
+
+            try (ResultSet rs = stmt.executeQuery()) {
+                List<Transacao> transacoes = new ArrayList<>();
+                while (rs.next()) {
+                    transacoes.add(mapResultSetToTransacao(rs));
+                }
+                return transacoes;
+            }
+
+        } catch (SQLException e) {
+            throw new DAOException("Erro ao buscar últimas transações por usuário: " + e.getMessage(), e);
         }
     }
 
@@ -462,7 +583,6 @@ public class TransacaoDAOImpl implements TransacaoDAO {
         Long categoriaId = rs.getObject("categoria_id", Long.class);
         transacao.setCategoriaId(categoriaId);
 
-        // Mapear categoria se existir
         if (categoriaId != null && rs.getString("categoria_nome") != null) {
             Categoria categoria = new Categoria();
             categoria.setId(categoriaId);
@@ -471,7 +591,16 @@ public class TransacaoDAOImpl implements TransacaoDAO {
             transacao.setCategoria(categoria);
         }
 
-        transacao.setObservacao(rs.getString("observacao"));
+        // Verificar se a coluna usuario_id existe no ResultSet
+        try {
+            Long usuarioId = rs.getObject("usuario_id", Long.class);
+            transacao.setUsuarioId(usuarioId);
+        } catch (SQLException e) {
+            // Coluna usuario_id não existe, usar valor padrão
+            transacao.setUsuarioId(1L);
+        }
+
+        transacao.setObservacao(rs.getString("observacoes"));
         transacao.setAtivo(rs.getBoolean("ativo"));
         transacao.setDataCriacao(rs.getTimestamp("data_criacao").toLocalDateTime());
         transacao.setDataAtualizacao(rs.getTimestamp("data_atualizacao").toLocalDateTime());

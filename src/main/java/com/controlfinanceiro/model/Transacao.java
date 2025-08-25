@@ -15,6 +15,8 @@ public class Transacao {
     private TipoTransacao tipo; // Pode ser RECEITA ou DESPESA
     private Long categoriaId; // Referência à categoria da transação
     private Categoria categoria;
+    private Usuario usuario; // Usuário associado à transação
+    private Long usuarioId; // ID do usuário associado à transação
     private String observacao; // Observações adicionais sobre a transação
     private boolean ativo; // Indica se a transação está ativa ou não
     private LocalDateTime dataCriacao; // Data de criação no formato "dd/MM/yyyy HH:mm:ss"
@@ -23,10 +25,9 @@ public class Transacao {
     // Construtores
 
     public Transacao() {
-        this.ativo = true; // Por padrão, a transação está ativa
+        this.ativo = true;
         this.dataCriacao = LocalDateTime.now();
         this.dataAtualizacao = LocalDateTime.now();
-        this.dataCriacao = LocalDateTime.now();
     }
 
     public Transacao (String descricao, BigDecimal valor, TipoTransacao tipo) {
@@ -109,6 +110,27 @@ public class Transacao {
         }
     }
 
+    public Usuario getUsuario() {
+        return usuario;
+    }
+
+    public void setUsuario(Usuario usuario) {
+        this.usuario = usuario;
+        if (usuario != null) {
+            this.usuarioId = usuario.getId();
+        }
+        this.dataAtualizacao = LocalDateTime.now();
+    }
+
+    public Long getUsuarioId() {
+        return usuarioId;
+    }
+
+    public void setUsuarioId(Long usuarioId) {
+        this.usuarioId = usuarioId;
+        this.dataAtualizacao = LocalDateTime.now();
+    }
+
     public String getObservacao() {
         return observacao;
     }
@@ -164,7 +186,7 @@ public class Transacao {
     //Validation
 
     public boolean isValid() {
-     return descricao != null&& !descricao.trim().isEmpty() &&
+        return descricao != null && !descricao.trim().isEmpty() &&
                 valor != null && valor.compareTo(BigDecimal.ZERO) > 0 &&
                 dataTransacao != null &&
                 tipo != null;

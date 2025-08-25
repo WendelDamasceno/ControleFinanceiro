@@ -7,12 +7,12 @@ import java.util.Optional;
 
 public interface CategoriaDAO {
 
-    Categoria salvar(Categoria categoria) throws DAOException;
+    Categoria inserir(Categoria categoria) throws DAOException;
     Categoria atualizar(Categoria categoria) throws DAOException;
-    void deletar(Long id) throws DAOException;
+    void excluir(Long id) throws DAOException;
     Optional<Categoria> buscarPorId(Long id) throws DAOException;
     List<Categoria> listarTodas() throws DAOException;
-    List<Categoria> listarTodas(boolean incluirInativas) throws DAOException;
+    List<Categoria> listarAtivas() throws DAOException;
     List<Categoria> buscarPorNome(String nome) throws DAOException;
     boolean existePorNome(String nome) throws DAOException;
     void inativar(Long id) throws DAOException;

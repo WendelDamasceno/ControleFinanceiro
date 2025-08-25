@@ -31,12 +31,12 @@ public class ConnectionFactory {
 
     public static Connection getConnection() throws SQLException {
         try {
-            String url = properties.getProperty("database.url");
-            String username = properties.getProperty("database.username");
-            String password = properties.getProperty("database.password");
-            String driver = properties.getProperty("database.driver");
+            String url = getProperty("db.url");
+            String username = getProperty("db.username");
+            String password = getProperty("db.password");
+            String driver = getProperty("db.driver");
 
-            if (url == null || username == null || password == null || driver == null) {
+            if (url == null || username == null || driver == null) {
                 throw new SQLException("Propriedades do banco de dados não configuradas corretamente");
             }
 
@@ -50,6 +50,17 @@ public class ConnectionFactory {
         }
     }
 
+    private static String getProperty(String key) {
+        // Primeiro tenta pegar das variáveis de ambiente
+        String envValue = System.getenv(key.replace(".", "_").toUpperCase());
+        if (envValue != null && !envValue.isEmpty()) {
+            return envValue;
+        }
+
+        // Se não encontrar na variável de ambiente, pega do arquivo properties
+        return properties.getProperty(key);
+    }
+
     public static boolean testConnection() {
         try (Connection conn = getConnection()) {
             return conn != null && !conn.isClosed();
@@ -57,9 +68,5 @@ public class ConnectionFactory {
             System.err.println("Erro ao testar conexão: " + e.getMessage());
             return false;
         }
-    }
-
-    public static String getProperty(String key) {
-        return properties.getProperty(key);
     }
 }
