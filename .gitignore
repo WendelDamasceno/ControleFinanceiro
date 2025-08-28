@@ -83,3 +83,7 @@ Thumbs.db
 *.db
 *.sqlite
 *.h2.db
+
+# User specific database files
+controle_financeiro.db
+*.sql.backup

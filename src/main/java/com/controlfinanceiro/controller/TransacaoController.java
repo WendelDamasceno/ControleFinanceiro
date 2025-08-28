@@ -80,7 +80,14 @@ public class TransacaoController {
     public List<Transacao> listarPorPeriodo(LocalDate inicio, LocalDate fim) throws BusinessException {
         logger.debug("Listando Transações por período: {} a {}", inicio, fim);
         try {
-            return transacaoDAO.listarPorPeriodo(inicio, fim);
+            // Obter usuário logado
+            Long usuarioId = com.controlfinanceiro.util.SessaoUsuario.getInstance().getIdUsuarioLogado();
+            if (usuarioId == null) {
+                throw new BusinessException("Nenhum usuário logado");
+            }
+
+            // Filtrar por usuário e período
+            return transacaoDAO.buscarPorUsuarioEPeriodo(usuarioId, inicio, fim);
         } catch (DAOException e) {
             logger.error("Erro ao listar Transacoes por período", e);
             throw new BusinessException("Erro ao listar transações: " + e.getMessage(), e);
@@ -100,7 +107,14 @@ public class TransacaoController {
     public BigDecimal calcularTotalPorTipo(TipoTransacao tipo) throws BusinessException{
         logger.debug("Calculando total por tipo: {}", tipo);
         try {
-            return transacaoDAO.calcularTotalPorTipo(tipo);
+            // Obter usuário logado
+            Long usuarioId = com.controlfinanceiro.util.SessaoUsuario.getInstance().getIdUsuarioLogado();
+            if (usuarioId == null) {
+                throw new BusinessException("Nenhum usuário logado");
+            }
+
+            // Calcular total por usuário e tipo
+            return transacaoDAO.calcularTotalPorUsuarioETipo(usuarioId, tipo);
         } catch (DAOException e) {
             logger.error("Erro ao calcular total por tipo", e);
             throw new BusinessException("Erro ao calcular total por tipo: " + e.getMessage(), e);
@@ -148,7 +162,14 @@ public class TransacaoController {
     public List<Transacao> listarTransacoesPorTipo(TipoTransacao tipo) throws BusinessException {
         logger.debug("Listando transações por tipo: {}", tipo);
         try {
-            return transacaoDAO.listarPorTipo(tipo);
+            // Obter usuário logado
+            Long usuarioId = com.controlfinanceiro.util.SessaoUsuario.getInstance().getIdUsuarioLogado();
+            if (usuarioId == null) {
+                throw new BusinessException("Nenhum usuário logado");
+            }
+
+            // Filtrar por usuário e tipo
+            return transacaoDAO.buscarPorUsuarioETipo(usuarioId, tipo);
         } catch (DAOException e) {
             logger.error("Erro ao listar transações por tipo", e);
             throw new BusinessException("Erro ao listar transações por tipo: " + e.getMessage(), e);
@@ -327,6 +348,34 @@ public class TransacaoController {
         } catch (Exception e) {
             logger.error("Erro ao obter últimas transações", e);
             throw new BusinessException("Erro ao obter transações: " + e.getMessage(), e);
+        }
+    }
+
+    /**
+     * Busca as transações mais recentes do usuário logado
+     * @param limite número máximo de transações a retornar
+     * @return lista das transações mais recentes
+     * @throws BusinessException em caso de erro
+     */
+    public List<Transacao> buscarTransacoesRecentes(int limite) throws BusinessException {
+        Long idUsuario = com.controlfinanceiro.util.SessaoUsuario.getInstance().getIdUsuarioLogado();
+
+        if (idUsuario == null) {
+            throw new BusinessException("Nenhum usuário logado encontrado.");
+        }
+
+        logger.info("Buscando {} transações recentes do usuário {}", limite, idUsuario);
+
+        try {
+            if (limite <= 0) {
+                throw new BusinessException("Limite deve ser maior que zero");
+            }
+
+            return transacaoDAO.buscarRecentesPorUsuario(idUsuario, limite);
+
+        } catch (DAOException e) {
+            logger.error("Erro ao buscar transações recentes", e);
+            throw new BusinessException("Erro ao buscar transações recentes: " + e.getMessage(), e);
         }
     }
 

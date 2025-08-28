@@ -31,4 +31,5 @@ public interface TransacaoDAO {
     BigDecimal calcularTotalPorUsuarioETipo(Long usuarioId, TipoTransacao tipo) throws DAOException;
     BigDecimal calcularTotalPorUsuarioEPeriodo(Long usuarioId, LocalDate inicio, LocalDate fim) throws DAOException;
     List<Transacao> buscarUltimasTransacoesPorUsuario(Long usuarioId, int limite) throws DAOException;
+    List<Transacao> buscarRecentesPorUsuario(Long usuarioId, int limite) throws DAOException;
 }

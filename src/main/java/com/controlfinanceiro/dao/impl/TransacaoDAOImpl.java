@@ -572,6 +572,39 @@ public class TransacaoDAOImpl implements TransacaoDAO {
         }
     }
 
+    @Override
+    public List<Transacao> buscarRecentesPorUsuario(Long usuarioId, int limite) throws DAOException {
+        String sql = """
+            SELECT t.*, 
+                   c.nome as categoria_nome, 
+                   c.descricao as categoria_descricao
+            FROM transacao t
+            LEFT JOIN categoria c ON t.categoria_id = c.id
+            WHERE t.usuario_id = ? AND t.ativo = true
+            ORDER BY t.data_transacao DESC, t.data_criacao DESC
+            LIMIT ?
+            """;
+
+        try (Connection conn = ConnectionFactory.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+
+            stmt.setLong(1, usuarioId);
+            stmt.setInt(2, limite);
+
+            ResultSet rs = stmt.executeQuery();
+            List<Transacao> transacoes = new ArrayList<>();
+
+            while (rs.next()) {
+                transacoes.add(mapResultSetToTransacao(rs));
+            }
+
+            return transacoes;
+
+        } catch (SQLException e) {
+            throw new DAOException("Erro ao buscar transações recentes por usuário", e);
+        }
+    }
+
     private Transacao mapResultSetToTransacao(ResultSet rs) throws SQLException {
         Transacao transacao = new Transacao();
         transacao.setId(rs.getLong("id"));

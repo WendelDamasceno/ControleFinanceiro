@@ -943,25 +943,106 @@ public class TelaPrincipal extends JFrame {
                     resumoRapidoAtual = createResumoRapidoMenu();
 
                     // Adicionar o novo resumo na mesma posição
-                    parent.add(resumoRapidoAtual, 2); // Posição 2 no menu inferior (após separador e espaço)
+                    parent.add(resumoRapidoAtual, 2); // Posição 2 no menu inferior
 
-                    // Forçar atualização visual
+                    // Forçar atualização visual completa
                     parent.revalidate();
                     parent.repaint();
 
+                    // Atualizar também o dashboard se estiver visível
+                    atualizarDashboardSeVisivel();
+
                     System.out.println("DEBUG: Resumo rápido atualizado com sucesso!");
                 } else {
-                    System.err.println("WARN: Parent do resumo rápido é null");
+                    System.err.println("WARN: Parent do resumo rápido é null - recriando estrutura");
+                    // Se não conseguir encontrar o parent, recriar todo o menu lateral
+                    recrearMenuLateral();
                 }
             } else {
-                System.err.println("WARN: Referência do resumo rápido é null");
+                System.err.println("WARN: Referência do resumo rápido é null - recriando");
+                recrearMenuLateral();
             }
         } catch (Exception e) {
             System.err.println("Erro ao atualizar resumo rápido: " + e.getMessage());
             e.printStackTrace();
+            // Em caso de erro, tentar recriar o menu lateral
+            recrearMenuLateral();
         }
     }
 
+    /**
+     * Atualiza o dashboard apenas se estiver sendo exibido no momento
+     */
+    private void atualizarDashboardSeVisivel() {
+        try {
+            // Verificar se o dashboard está sendo exibido atualmente
+            Component visibleComponent = null;
+            for (Component comp : painelConteudo.getComponents()) {
+                if (comp.isVisible()) {
+                    visibleComponent = comp;
+                    break;
+                }
+            }
+
+            // Se o dashboard estiver visível, atualizá-lo
+            if (visibleComponent != null && visibleComponent.getName() != null &&
+                visibleComponent.getName().equals("dashboard")) {
+
+                // Remover dashboard atual
+                painelConteudo.remove(visibleComponent);
+
+                // Criar novo dashboard com dados atualizados
+                JPanel novoDashboard = createDashboard();
+                novoDashboard.setName("dashboard");
+
+                // Adicionar novo dashboard
+                painelConteudo.add(novoDashboard, "dashboard");
+
+                // Mostrar o dashboard atualizado
+                cardLayout.show(painelConteudo, "dashboard");
+
+                // Atualizar o estado visual dos botões
+                atualizarEstadoBotoes(btnDashboard);
+
+                painelConteudo.revalidate();
+                painelConteudo.repaint();
+            }
+        } catch (Exception e) {
+            System.err.println("Erro ao atualizar dashboard: " + e.getMessage());
+        }
+    }
+
+    /**
+     * Recria o menu lateral completamente em caso de problemas
+     */
+    private void recrearMenuLateral() {
+        try {
+            // Encontrar o menu lateral no layout
+            for (Component comp : getContentPane().getComponents()) {
+                if (comp instanceof JPanel && comp.getName() != null &&
+                    comp.getName().equals("menuLateral")) {
+
+                    // Remover menu atual
+                    getContentPane().remove(comp);
+
+                    // Criar novo menu lateral
+                    JPanel novoMenuLateral = createMenuLateral();
+                    novoMenuLateral.setName("menuLateral");
+
+                    // Adicionar novo menu na posição correta (WEST)
+                    getContentPane().add(novoMenuLateral, BorderLayout.WEST);
+
+                    // Forçar atualização
+                    getContentPane().revalidate();
+                    getContentPane().repaint();
+
+                    break;
+                }
+            }
+        } catch (Exception e) {
+            System.err.println("Erro ao recriar menu lateral: " + e.getMessage());
+        }
+    }
 
     /**
      * Cria um painel de transações recentes para usuários com dados
@@ -970,87 +1051,161 @@ public class TelaPrincipal extends JFrame {
         JPanel painel = new JPanel(new BorderLayout());
         painel.setBackground(Color.WHITE);
         painel.setBorder(BorderFactory.createCompoundBorder(
-            BorderFactory.createLineBorder(new Color(222, 226, 230), 1),
+            BorderFactory.createLineBorder(COR_BORDA, 1),
             BorderFactory.createEmptyBorder(20, 20, 20, 20)
         ));
 
-        // Título da seção
-        JLabel titulo = new JLabel("📋 Transações Recentes");
-        titulo.setFont(new Font("Segoe UI", Font.BOLD, 18));
-        titulo.setForeground(new Color(52, 73, 94));
-        titulo.setBorder(BorderFactory.createEmptyBorder(0, 0, 15, 0));
+        // Header
+        JPanel header = new JPanel(new BorderLayout());
+        header.setBackground(Color.WHITE);
+
+        JLabel lblTitulo = new JLabel("📋 Transações Recentes");
+        lblTitulo.setFont(new Font("Segoe UI", Font.BOLD, 18));
+        lblTitulo.setForeground(COR_TEXTO_PRIMARIO);
+
+        JLabel lblSubtitulo = new JLabel("Últimas 5 movimentações financeiras");
+        lblSubtitulo.setFont(new Font("Segoe UI", Font.PLAIN, 14));
+        lblSubtitulo.setForeground(COR_TEXTO_TERCIARIO);
+
+        JPanel painelTitulo = new JPanel();
+        painelTitulo.setLayout(new BoxLayout(painelTitulo, BoxLayout.Y_AXIS));
+        painelTitulo.setBackground(Color.WHITE);
+        painelTitulo.add(lblTitulo);
+        painelTitulo.add(lblSubtitulo);
+
+        header.add(painelTitulo, BorderLayout.WEST);
 
         // Lista de transações
-        JPanel listaTransacoes = new JPanel();
-        listaTransacoes.setLayout(new BoxLayout(listaTransacoes, BoxLayout.Y_AXIS));
-        listaTransacoes.setBackground(Color.WHITE);
-
         try {
-            List<Transacao> ultimasTransacoes = dashboardController.getUltimasTransacoes(5);
+            List<Transacao> transacoesRecentes = transacaoController.buscarTransacoesRecentes(5);
 
-            if (ultimasTransacoes.isEmpty()) {
+            if (transacoesRecentes.isEmpty()) {
                 JLabel lblVazio = new JLabel("Nenhuma transação encontrada");
                 lblVazio.setFont(new Font("Segoe UI", Font.ITALIC, 14));
-                lblVazio.setForeground(new Color(134, 142, 150));
+                lblVazio.setForeground(COR_TEXTO_TERCIARIO);
                 lblVazio.setHorizontalAlignment(SwingConstants.CENTER);
-                listaTransacoes.add(lblVazio);
+                lblVazio.setBorder(BorderFactory.createEmptyBorder(40, 0, 40, 0));
+
+                painel.add(header, BorderLayout.NORTH);
+                painel.add(lblVazio, BorderLayout.CENTER);
             } else {
-                for (Transacao transacao : ultimasTransacoes) {
-                    listaTransacoes.add(createItemTransacao(transacao));
-                    listaTransacoes.add(Box.createRigidArea(new Dimension(0, 5)));
+                JPanel listaTransacoes = new JPanel();
+                listaTransacoes.setLayout(new BoxLayout(listaTransacoes, BoxLayout.Y_AXIS));
+                listaTransacoes.setBackground(Color.WHITE);
+
+                for (Transacao transacao : transacoesRecentes) {
+                    JPanel itemTransacao = createItemTransacao(transacao);
+                    listaTransacoes.add(itemTransacao);
+                    listaTransacoes.add(Box.createRigidArea(new Dimension(0, 8)));
                 }
+
+                JScrollPane scrollPane = new JScrollPane(listaTransacoes);
+                scrollPane.setPreferredSize(new Dimension(0, 200));
+                scrollPane.setBorder(BorderFactory.createEmptyBorder());
+                scrollPane.setBackground(Color.WHITE);
+
+                painel.add(header, BorderLayout.NORTH);
+                painel.add(scrollPane, BorderLayout.CENTER);
             }
+
         } catch (Exception e) {
-            JLabel lblErro = new JLabel("Erro ao carregar transações");
+            JLabel lblErro = new JLabel("Erro ao carregar transações: " + e.getMessage());
             lblErro.setFont(new Font("Segoe UI", Font.ITALIC, 14));
-            lblErro.setForeground(new Color(220, 53, 69));
+            lblErro.setForeground(COR_ERRO);
             lblErro.setHorizontalAlignment(SwingConstants.CENTER);
-            listaTransacoes.add(lblErro);
+
+            painel.add(header, BorderLayout.NORTH);
+            painel.add(lblErro, BorderLayout.CENTER);
         }
-
-        JScrollPane scrollPane = new JScrollPane(listaTransacoes);
-        scrollPane.setBorder(null);
-        scrollPane.setBackground(Color.WHITE);
-        scrollPane.setPreferredSize(new Dimension(0, 200));
-
-        painel.add(titulo, BorderLayout.NORTH);
-        painel.add(scrollPane, BorderLayout.CENTER);
 
         return painel;
     }
 
-    /**
-     * Cria um card de passo para o guia do usuário novo
-     */
+    private JPanel createItemTransacao(Transacao transacao) {
+        JPanel item = new JPanel(new BorderLayout());
+        item.setBackground(new Color(248, 249, 250));
+        item.setBorder(BorderFactory.createCompoundBorder(
+            BorderFactory.createLineBorder(new Color(233, 236, 239), 1),
+            BorderFactory.createEmptyBorder(12, 15, 12, 15)
+        ));
+
+        // Ícone e tipo
+        String icone = transacao.getTipo() == TipoTransacao.RECEITA ? "💰" : "💸";
+        Color cor = transacao.getTipo() == TipoTransacao.RECEITA ? COR_SUCESSO : COR_ERRO;
+
+        JLabel lblIcone = new JLabel(icone);
+        lblIcone.setFont(new Font("Segoe UI Emoji", Font.PLAIN, 16));
+
+        // Informações principais
+        JPanel painelInfo = new JPanel();
+        painelInfo.setLayout(new BoxLayout(painelInfo, BoxLayout.Y_AXIS));
+        painelInfo.setBackground(new Color(248, 249, 250));
+
+        JLabel lblDescricao = new JLabel(transacao.getDescricao());
+        lblDescricao.setFont(new Font("Segoe UI", Font.BOLD, 14));
+        lblDescricao.setForeground(COR_TEXTO_PRIMARIO);
+
+        String categoria = transacao.getCategoria() != null ?
+            transacao.getCategoria().getNome() : "Sem categoria";
+        JLabel lblCategoria = new JLabel(categoria);
+        lblCategoria.setFont(new Font("Segoe UI", Font.PLAIN, 12));
+        lblCategoria.setForeground(COR_TEXTO_TERCIARIO);
+
+        painelInfo.add(lblDescricao);
+        painelInfo.add(lblCategoria);
+
+        // Valor e data
+        JPanel painelValor = new JPanel();
+        painelValor.setLayout(new BoxLayout(painelValor, BoxLayout.Y_AXIS));
+        painelValor.setBackground(new Color(248, 249, 250));
+
+        JLabel lblValor = new JLabel(FormatUtils.formatarValor(transacao.getValor()));
+        lblValor.setFont(new Font("Segoe UI", Font.BOLD, 14));
+        lblValor.setForeground(cor);
+        lblValor.setHorizontalAlignment(SwingConstants.RIGHT);
+
+        JLabel lblData = new JLabel(transacao.getDataTransacao().format(
+            java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy")));
+        lblData.setFont(new Font("Segoe UI", Font.PLAIN, 12));
+        lblData.setForeground(COR_TEXTO_TERCIARIO);
+        lblData.setHorizontalAlignment(SwingConstants.RIGHT);
+
+        painelValor.add(lblValor);
+        painelValor.add(lblData);
+
+        item.add(lblIcone, BorderLayout.WEST);
+        item.add(painelInfo, BorderLayout.CENTER);
+        item.add(painelValor, BorderLayout.EAST);
+
+        return item;
+    }
+
     private JPanel createCardPasso(String numero, String icone, String titulo, String descricao, Color cor, String comando) {
         JPanel card = new JPanel(new BorderLayout());
         card.setBackground(Color.WHITE);
         card.setBorder(BorderFactory.createCompoundBorder(
-            BorderFactory.createLineBorder(cor, 1),
-            BorderFactory.createEmptyBorder(20, 20, 20, 20)
+            BorderFactory.createLineBorder(cor, 2),
+            BorderFactory.createEmptyBorder(25, 20, 25, 20)
         ));
-        card.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        card.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
 
-        // Header com número e ícone
+        // Header com número
         JPanel header = new JPanel(new BorderLayout());
         header.setBackground(Color.WHITE);
 
         JLabel lblNumero = new JLabel(numero);
-        lblNumero.setFont(new Font("Segoe UI", Font.BOLD, 24));
-        lblNumero.setForeground(cor);
-        lblNumero.setPreferredSize(new Dimension(40, 40));
+        lblNumero.setFont(new Font("Segoe UI", Font.BOLD, 18));
+        lblNumero.setForeground(Color.WHITE);
         lblNumero.setHorizontalAlignment(SwingConstants.CENTER);
-        lblNumero.setBorder(BorderFactory.createCompoundBorder(
-            BorderFactory.createLineBorder(cor, 2),
-            BorderFactory.createEmptyBorder(5, 5, 5, 5)
-        ));
+        lblNumero.setOpaque(true);
+        lblNumero.setBackground(cor);
+        lblNumero.setPreferredSize(new Dimension(30, 30));
 
         JLabel lblIcone = new JLabel(icone);
-        lblIcone.setFont(new Font("Segoe UI Emoji", Font.PLAIN, 32));
-        lblIcone.setHorizontalAlignment(SwingConstants.CENTER);
+        lblIcone.setFont(new Font("Segoe UI Emoji", Font.PLAIN, 24));
 
         header.add(lblNumero, BorderLayout.WEST);
-        header.add(lblIcone, BorderLayout.CENTER);
+        header.add(lblIcone, BorderLayout.EAST);
 
         // Conteúdo
         JPanel conteudo = new JPanel();
@@ -1060,13 +1215,13 @@ public class TelaPrincipal extends JFrame {
 
         JLabel lblTitulo = new JLabel(titulo);
         lblTitulo.setFont(new Font("Segoe UI", Font.BOLD, 16));
-        lblTitulo.setForeground(new Color(52, 73, 94));
-        lblTitulo.setAlignmentX(Component.CENTER_ALIGNMENT);
+        lblTitulo.setForeground(cor);
+        lblTitulo.setAlignmentX(Component.LEFT_ALIGNMENT);
 
-        JLabel lblDescricao = new JLabel("<html><div style='text-align: center'>" + descricao + "</div></html>");
-        lblDescricao.setFont(new Font("Segoe UI", Font.PLAIN, 12));
-        lblDescricao.setForeground(new Color(108, 117, 125));
-        lblDescricao.setAlignmentX(Component.CENTER_ALIGNMENT);
+        JLabel lblDescricao = new JLabel("<html>" + descricao + "</html>");
+        lblDescricao.setFont(new Font("Segoe UI", Font.PLAIN, 13));
+        lblDescricao.setForeground(COR_TEXTO_TERCIARIO);
+        lblDescricao.setAlignmentX(Component.LEFT_ALIGNMENT);
 
         conteudo.add(lblTitulo);
         conteudo.add(Box.createRigidArea(new Dimension(0, 8)));
@@ -1085,69 +1240,43 @@ public class TelaPrincipal extends JFrame {
 
             @Override
             public void mouseEntered(java.awt.event.MouseEvent evt) {
-                card.setBorder(BorderFactory.createCompoundBorder(
-                    BorderFactory.createLineBorder(cor, 2),
-                    BorderFactory.createEmptyBorder(19, 19, 19, 19)
-                ));
+                card.setBackground(new Color(cor.getRed(), cor.getGreen(), cor.getBlue(), 20));
+                header.setBackground(new Color(cor.getRed(), cor.getGreen(), cor.getBlue(), 20));
+                conteudo.setBackground(new Color(cor.getRed(), cor.getGreen(), cor.getBlue(), 20));
             }
 
             @Override
             public void mouseExited(java.awt.event.MouseEvent evt) {
-                card.setBorder(BorderFactory.createCompoundBorder(
-                    BorderFactory.createLineBorder(cor, 1),
-                    BorderFactory.createEmptyBorder(20, 20, 20, 20)
-                ));
+                card.setBackground(Color.WHITE);
+                header.setBackground(Color.WHITE);
+                conteudo.setBackground(Color.WHITE);
             }
         });
 
         return card;
     }
 
-    /**
-     * Método corrigido para criar itens de transação
-     */
-    private JPanel createItemTransacao(Transacao transacao) {
-        JPanel item = new JPanel(new BorderLayout());
-        item.setBackground(new Color(248, 249, 250));
-        item.setBorder(BorderFactory.createEmptyBorder(8, 12, 8, 12));
-        item.setMaximumSize(new Dimension(Integer.MAX_VALUE, 50));
-
-        String icone = transacao.getTipo() == TipoTransacao.RECEITA ? "💰" : "💸";
-        Color cor = transacao.getTipo() == TipoTransacao.RECEITA ? new Color(40, 167, 69) : new Color(220, 53, 69);
-
-        JLabel lblIcone = new JLabel(icone);
-        lblIcone.setFont(new Font("Segoe UI Emoji", Font.PLAIN, 16));
-
-        JPanel painelInfo = new JPanel(new BorderLayout());
-        painelInfo.setBackground(new Color(248, 249, 250));
-
-        JLabel lblDescricao = new JLabel(transacao.getDescricao());
-        lblDescricao.setFont(new Font("Segoe UI", Font.PLAIN, 13));
-        lblDescricao.setForeground(new Color(52, 73, 94));
-
-        JLabel lblData = new JLabel(transacao.getDataTransacao().format(java.time.format.DateTimeFormatter.ofPattern("dd/MM")));
-        lblData.setFont(new Font("Segoe UI", Font.PLAIN, 11));
-        lblData.setForeground(new Color(134, 142, 150));
-
-        painelInfo.add(lblDescricao, BorderLayout.CENTER);
-        painelInfo.add(lblData, BorderLayout.SOUTH);
-
-        JLabel lblValor = new JLabel(FormatUtils.formatarValor(transacao.getValor()));
-        lblValor.setFont(new Font("Segoe UI", Font.BOLD, 13));
-        lblValor.setForeground(cor);
-
-        item.add(lblIcone, BorderLayout.WEST);
-        item.add(painelInfo, BorderLayout.CENTER);
-        item.add(lblValor, BorderLayout.EAST);
-
-        return item;
+    private void setupEventos() {
+        // Os eventos já são configurados nos métodos de criação dos botões
+        // Este método pode ser usado para configurações adicionais de eventos globais
     }
 
-    /**
-     * Configura os eventos da tela
-     */
-    private void setupEventos() {
-        // Os eventos já estão configurados nos botões do menu
-        // Este método pode ser usado para configurar eventos globais se necessário
+    // Método para compatibilidade com o menu lateral melhorado
+    private JPanel createMenuLateral() {
+        return createMenuLateralMelhorado();
+    }
+
+    // Método para compatibilidade - delegar para o método correto
+    private void atualizarEstadoBotoes(JButton botaoAtivo) {
+        if (botaoAtivo == btnDashboard) {
+            atualizarEstadoBotoes("DASHBOARD");
+        } else if (botaoAtivo == btnReceita) {
+            atualizarEstadoBotoes("RECEITA");
+        } else if (botaoAtivo == btnDespesa) {
+            atualizarEstadoBotoes("DESPESA");
+        } else if (botaoAtivo == btnRelatorio) {
+            atualizarEstadoBotoes("RELATORIO");
+        }
     }
 }
+
