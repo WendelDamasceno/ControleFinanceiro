@@ -294,6 +294,41 @@ public class OrcamentoDAOImpl implements OrcamentoDAO {
         return false;
     }
 
+    @Override
+    public List<Orcamento> buscarPorUsuarioEPeriodo(Long usuarioId, int mes, int ano) throws DAOException {
+        if (usuarioId == null) {
+            throw new DAOException("ID do usuário não pode ser nulo");
+        }
+
+        String sql = """
+            SELECT o.id, o.categoria_id, o.valor_limite, o.mes, o.ano, o.descricao, o.ativo, o.data_criacao, o.data_atualizacao,
+                   c.nome as categoria_nome, c.descricao as categoria_descricao
+            FROM orcamento o 
+            LEFT JOIN categoria c ON o.categoria_id = c.id
+            WHERE o.ativo = true AND o.usuario_id = ? AND o.mes = ? AND o.ano = ?
+            ORDER BY c.nome
+            """;
+
+        try (Connection conn = ConnectionFactory.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+
+            stmt.setLong(1, usuarioId);
+            stmt.setInt(2, mes);
+            stmt.setInt(3, ano);
+
+            try (ResultSet rs = stmt.executeQuery()) {
+                List<Orcamento> orcamentos = new ArrayList<>();
+                while (rs.next()) {
+                    orcamentos.add(mapResultSetToOrcamento(rs));
+                }
+                return orcamentos;
+            }
+
+        } catch (SQLException e) {
+            throw new DAOException("Erro ao buscar orçamentos por usuário e período: " + e.getMessage(), e);
+        }
+    }
+
     private Orcamento mapResultSetToOrcamento(ResultSet rs) throws SQLException {
         Orcamento orcamento = new Orcamento();
         orcamento.setId(rs.getLong("id"));

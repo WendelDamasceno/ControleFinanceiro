@@ -15,5 +15,6 @@ public interface OrcamentoDAO {
     List<Orcamento> buscarPorPeriodo(int mes, int ano) throws DAOException;
     List<Orcamento> buscarPorCategoria(Long categoriaId) throws DAOException;
     List<Orcamento> buscarPorCategoriaEPeriodo(Long categoriaId, int mes, int ano) throws DAOException;
+    List<Orcamento> buscarPorUsuarioEPeriodo(Long usuarioId, int mes, int ano) throws DAOException;
     boolean existeOrcamentoPorCategoriaEPeriodo(Long categoriaId, int mes, int ano) throws DAOException;
 }

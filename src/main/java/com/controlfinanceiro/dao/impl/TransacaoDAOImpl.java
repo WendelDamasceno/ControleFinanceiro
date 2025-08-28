@@ -605,6 +605,41 @@ public class TransacaoDAOImpl implements TransacaoDAO {
         }
     }
 
+    @Override
+    public List<Transacao> buscarPorUsuarioECategoria(Long usuarioId, Long categoriaId) throws DAOException {
+        if (usuarioId == null || categoriaId == null) {
+            throw new DAOException("ID do usuário e ID da categoria não podem ser nulos");
+        }
+
+        String sql = """
+            SELECT t.*, 
+                   c.nome as categoria_nome, 
+                   c.descricao as categoria_descricao
+            FROM transacao t
+            LEFT JOIN categoria c ON t.categoria_id = c.id
+            WHERE t.usuario_id = ? AND t.categoria_id = ? AND t.ativo = true
+            ORDER BY t.data_transacao DESC
+            """;
+
+        try (Connection conn = ConnectionFactory.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+
+            stmt.setLong(1, usuarioId);
+            stmt.setLong(2, categoriaId);
+
+            try (ResultSet rs = stmt.executeQuery()) {
+                List<Transacao> transacoes = new ArrayList<>();
+                while (rs.next()) {
+                    transacoes.add(mapResultSetToTransacao(rs));
+                }
+                return transacoes;
+            }
+
+        } catch (SQLException e) {
+            throw new DAOException("Erro ao buscar transações por usuário e categoria: " + e.getMessage(), e);
+        }
+    }
+
     private Transacao mapResultSetToTransacao(ResultSet rs) throws SQLException {
         Transacao transacao = new Transacao();
         transacao.setId(rs.getLong("id"));

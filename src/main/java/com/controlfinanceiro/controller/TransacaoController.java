@@ -97,7 +97,14 @@ public class TransacaoController {
     public List<Transacao> listarPorCategoria(Long categoriaId) throws BusinessException{
         logger.debug("Listando Transações por Categoria ID: {}", categoriaId);
         try {
-            return transacaoDAO.buscarPorCategoria(categoriaId);
+            // Obter usuário logado
+            Long usuarioId = com.controlfinanceiro.util.SessaoUsuario.getInstance().getIdUsuarioLogado();
+            if (usuarioId == null) {
+                throw new BusinessException("Nenhum usuário logado");
+            }
+
+            // Filtrar por usuário e categoria
+            return transacaoDAO.buscarPorUsuarioECategoria(usuarioId, categoriaId);
         } catch (DAOException e) {
             logger.error("Erro ao listar Transacoes por categoria", e);
             throw new BusinessException("Erro ao listar transações por categoria: " + e.getMessage(), e);
@@ -140,9 +147,16 @@ public class TransacaoController {
     }
 
     public List<Transacao> listarTransacoes() throws BusinessException {
-        logger.debug("Listando todas as transações");
+        logger.debug("Listando todas as transações do usuário logado");
         try {
-            return transacaoDAO.listarTodas();
+            // Obter usuário logado
+            Long usuarioId = com.controlfinanceiro.util.SessaoUsuario.getInstance().getIdUsuarioLogado();
+            if (usuarioId == null) {
+                throw new BusinessException("Nenhum usuário logado");
+            }
+
+            // Filtrar por usuário
+            return transacaoDAO.buscarPorUsuario(usuarioId);
         } catch (DAOException e) {
             logger.error("Erro ao listar todas as transações", e);
             throw new BusinessException("Erro ao listar transações: " + e.getMessage(), e);
@@ -150,9 +164,16 @@ public class TransacaoController {
     }
 
     public List<Transacao> listarAtivas() throws BusinessException {
-        logger.debug("Listando todas as transações ativas");
+        logger.debug("Listando todas as transações ativas do usuário logado");
         try {
-            return transacaoDAO.listarTodas();
+            // Obter usuário logado
+            Long usuarioId = com.controlfinanceiro.util.SessaoUsuario.getInstance().getIdUsuarioLogado();
+            if (usuarioId == null) {
+                throw new BusinessException("Nenhum usuário logado");
+            }
+
+            // Filtrar por usuário
+            return transacaoDAO.buscarPorUsuario(usuarioId);
         } catch (DAOException e) {
             logger.error("Erro ao listar transações ativas", e);
             throw new BusinessException("Erro ao listar transações: " + e.getMessage(), e);
@@ -179,7 +200,14 @@ public class TransacaoController {
     public List<Transacao> listarTransacoesPorPeriodo(LocalDate dataInicio, LocalDate dataFim) throws BusinessException {
         logger.debug("Listando transações por período: {} a {}", dataInicio, dataFim);
         try {
-            return transacaoDAO.listarPorPeriodo(dataInicio, dataFim);
+            // Obter usuário logado
+            Long usuarioId = com.controlfinanceiro.util.SessaoUsuario.getInstance().getIdUsuarioLogado();
+            if (usuarioId == null) {
+                throw new BusinessException("Nenhum usuário logado");
+            }
+
+            // Filtrar por usuário e período
+            return transacaoDAO.buscarPorUsuarioEPeriodo(usuarioId, dataInicio, dataFim);
         } catch (DAOException e) {
             logger.error("Erro ao listar transações por período", e);
             throw new BusinessException("Erro ao listar transações por período: " + e.getMessage(), e);

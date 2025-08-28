@@ -28,6 +28,7 @@ public interface TransacaoDAO {
     List<Transacao> buscarPorUsuario(Long usuarioId) throws DAOException;
     List<Transacao> buscarPorUsuarioEPeriodo(Long usuarioId, LocalDate dataInicio, LocalDate dataFim) throws DAOException;
     List<Transacao> buscarPorUsuarioETipo(Long usuarioId, TipoTransacao tipo) throws DAOException;
+    List<Transacao> buscarPorUsuarioECategoria(Long usuarioId, Long categoriaId) throws DAOException;
     BigDecimal calcularTotalPorUsuarioETipo(Long usuarioId, TipoTransacao tipo) throws DAOException;
     BigDecimal calcularTotalPorUsuarioEPeriodo(Long usuarioId, LocalDate inicio, LocalDate fim) throws DAOException;
     List<Transacao> buscarUltimasTransacoesPorUsuario(Long usuarioId, int limite) throws DAOException;

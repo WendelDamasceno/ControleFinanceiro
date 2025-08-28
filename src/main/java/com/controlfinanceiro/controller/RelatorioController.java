@@ -42,10 +42,16 @@ public class RelatorioController {
         logger.info("Gerando resumo financeiro geral");
 
         try {
+            // Obter usuário logado
+            Long usuarioId = com.controlfinanceiro.util.SessaoUsuario.getInstance().getIdUsuarioLogado();
+            if (usuarioId == null) {
+                throw new BusinessException("Nenhum usuário logado");
+            }
+
             Map<String, Object> resumo = new HashMap<>();
 
-            BigDecimal totalReceitas = transacaoDAO.calcularTotalPorTipo(TipoTransacao.RECEITA);
-            BigDecimal totalDespesas = transacaoDAO.calcularTotalPorTipo(TipoTransacao.DESPESA);
+            BigDecimal totalReceitas = transacaoDAO.calcularTotalPorUsuarioETipo(usuarioId, TipoTransacao.RECEITA);
+            BigDecimal totalDespesas = transacaoDAO.calcularTotalPorUsuarioETipo(usuarioId, TipoTransacao.DESPESA);
             BigDecimal saldoAtual = totalReceitas.subtract(totalDespesas);
 
             resumo.put("totalReceitas", totalReceitas);
@@ -70,9 +76,15 @@ public class RelatorioController {
         validarPeriodo(inicio, fim);
 
         try {
+            // Obter usuário logado
+            Long usuarioId = com.controlfinanceiro.util.SessaoUsuario.getInstance().getIdUsuarioLogado();
+            if (usuarioId == null) {
+                throw new BusinessException("Nenhum usuário logado");
+            }
+
             Map<String, Object> resumo = new HashMap<>();
 
-            List<Transacao> transacoes = transacaoDAO.listarPorPeriodo(inicio, fim);
+            List<Transacao> transacoes = transacaoDAO.buscarPorUsuarioEPeriodo(usuarioId, inicio, fim);
             BigDecimal totalReceitas = BigDecimal.ZERO;
             BigDecimal totalDespesas = BigDecimal.ZERO;
 
@@ -110,8 +122,14 @@ public class RelatorioController {
         validarPeriodo(mes, ano);
 
         try {
+            // Obter usuário logado
+            Long usuarioId = com.controlfinanceiro.util.SessaoUsuario.getInstance().getIdUsuarioLogado();
+            if (usuarioId == null) {
+                throw new BusinessException("Nenhum usuário logado");
+            }
+
             Map<String, Object> relatorio = new HashMap<>();
-            List<Orcamento> orcamentos = orcamentoDAO.buscarPorPeriodo(mes, ano);
+            List<Orcamento> orcamentos = orcamentoDAO.buscarPorUsuarioEPeriodo(usuarioId, mes, ano);
 
             BigDecimal totalOrcado = BigDecimal.ZERO;
             BigDecimal totalGasto = BigDecimal.ZERO;
@@ -122,7 +140,7 @@ public class RelatorioController {
             for (Orcamento orcamento : orcamentos) {
                 totalOrcado = totalOrcado.add(orcamento.getValorLimite());
 
-                List<Transacao> transacoesCategoria = transacaoDAO.buscarPorCategoria(orcamento.getCategoriaId());
+                List<Transacao> transacoesCategoria = transacaoDAO.buscarPorUsuarioECategoria(usuarioId, orcamento.getCategoriaId());
 
                 for (Transacao transacao : transacoesCategoria) {
                     if (!transacao.getDataTransacao().isBefore(inicioMes) &&
@@ -157,9 +175,15 @@ public class RelatorioController {
         logger.info("Gerando relatório por categoria: {}", categoriaId);
 
         try {
+            // Obter usuário logado
+            Long usuarioId = com.controlfinanceiro.util.SessaoUsuario.getInstance().getIdUsuarioLogado();
+            if (usuarioId == null) {
+                throw new BusinessException("Nenhum usuário logado");
+            }
+
             Map<String, Object> relatorio = new HashMap<>();
 
-            List<Transacao> transacoes = transacaoDAO.buscarPorCategoria(categoriaId);
+            List<Transacao> transacoes = transacaoDAO.buscarPorUsuarioECategoria(usuarioId, categoriaId);
 
             BigDecimal totalReceitas = transacoes.stream()
                     .filter(t -> t.getTipo() == TipoTransacao.RECEITA)
@@ -194,11 +218,17 @@ public class RelatorioController {
         logger.info("Gerando totais por categoria");
 
         try {
+            // Obter usuário logado
+            Long usuarioId = com.controlfinanceiro.util.SessaoUsuario.getInstance().getIdUsuarioLogado();
+            if (usuarioId == null) {
+                throw new BusinessException("Nenhum usuário logado");
+            }
+
             Map<String, BigDecimal> totais = new HashMap<>();
             List<Categoria> categorias = categoriaDAO.listarAtivas();
 
             for (Categoria categoria : categorias) {
-                List<Transacao> transacoes = transacaoDAO.buscarPorCategoria(categoria.getId());
+                List<Transacao> transacoes = transacaoDAO.buscarPorUsuarioECategoria(usuarioId, categoria.getId());
 
                 BigDecimal totalCategoria = BigDecimal.ZERO;
                 for (Transacao transacao : transacoes) {
